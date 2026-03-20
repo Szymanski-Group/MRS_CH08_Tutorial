@@ -1,0 +1,51 @@
+# Carbonate averaged from COD IDs: Li2CO3_15_2310703, Li2CO3_15_9008283
+# generated using pymatgen
+data_Li2CO3
+_symmetry_space_group_name_H-M   'P 1'
+_cell_length_a   8.37465000
+_cell_length_b   4.98625000
+_cell_length_c   6.20375000
+_cell_angle_alpha   90.00000000
+_cell_angle_beta   114.66500000
+_cell_angle_gamma   90.00000000
+_symmetry_Int_Tables_number   1
+_chemical_formula_structural   Li2CO3
+_chemical_formula_sum   'Li8 C4 O12'
+_cell_volume   235.42130788
+_cell_formula_units_Z   4
+loop_
+ _symmetry_equiv_pos_site_id
+ _symmetry_equiv_pos_as_xyz
+  1  'x, y, z'
+loop_
+ _atom_site_type_symbol
+ _atom_site_label
+ _atom_site_symmetry_multiplicity
+ _atom_site_fract_x
+ _atom_site_fract_y
+ _atom_site_fract_z
+ _atom_site_occupancy
+  C  C0  1  1.00000000  0.99565000  0.25000000  1.0
+  C  C1  1  0.00000000  0.00435000  0.75000000  1.0
+  C  C2  1  0.50000000  0.50435000  0.75000000  1.0
+  C  C3  1  0.50000000  0.49565000  0.25000000  1.0
+  Li  Li4  1  0.19975000  0.50080000  0.83720000  1.0
+  Li  Li5  1  0.19975000  0.49920000  0.33720000  1.0
+  Li  Li6  1  0.30025000  0.99920000  0.16280000  1.0
+  Li  Li7  1  0.30025000  0.00080000  0.66280000  1.0
+  Li  Li8  1  0.69975000  0.99920000  0.33720000  1.0
+  Li  Li9  1  0.69975000  0.00080000  0.83720000  1.0
+  Li  Li10  1  0.80025000  0.50080000  0.66280000  1.0
+  Li  Li11  1  0.80025000  0.49920000  0.16280000  1.0
+  O  O12  1  1.00000000  0.49585000  0.25000000  1.0
+  O  O13  1  0.00000000  0.50415000  0.75000000  1.0
+  O  O14  1  0.14545000  0.00175000  0.81635000  1.0
+  O  O15  1  0.14545000  0.99825000  0.31635000  1.0
+  O  O16  1  0.35455000  0.49825000  0.18365000  1.0
+  O  O17  1  0.35455000  0.50175000  0.68365000  1.0
+  O  O18  1  0.50000000  0.00415000  0.75000000  1.0
+  O  O19  1  0.50000000  0.99585000  0.25000000  1.0
+  O  O20  1  0.64545000  0.49825000  0.31635000  1.0
+  O  O21  1  0.64545000  0.50175000  0.81635000  1.0
+  O  O22  1  0.85455000  0.00175000  0.68365000  1.0
+  O  O23  1  0.85455000  0.99825000  0.18365000  1.0
