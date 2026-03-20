@@ -1,6 +1,6 @@
-# MRS_CH08_Tutorial
+# MRS CH08 Tutorial on ML for powder XRD
 
-Google Colab notebooks for the Spring MRS tutorial on machine learning for powder XRD.
+Google Colab notebooks for the Spring MRS 2026 tutorial on machine learning for powder XRD.
 
 ## Open the Tutorial
 
@@ -16,10 +16,4 @@ Start here: [00_START_HERE.ipynb](https://colab.research.google.com/github/Szyma
 - `05_Generative-AI/`: diffusion demo and structure sanity checks
 - `06_Challenge/`: open challenge notebook
 - `data/`: CIFs, reference structures, and experimental/mystery patterns
-- `xrd_tutorial/`: shared Python modules used by notebooks (to avoid repeated code)
-
-## Notes
-
-- Training notebooks use reduced defaults for live Colab runtime.
-- You can increase dataset size/epochs in each notebook for offline runs.
-- Optional pretrained checkpoints can be placed under `data/pretrained/`.
+- `notebooks`: include the full runnable tutorial code directly in their code cells
