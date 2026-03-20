@@ -1,10 +1,10 @@
-# MRS-XRD-Tutorial
+# MRS_CH08_Tutorial
 
 Google Colab notebooks for the Spring MRS tutorial on machine learning for powder XRD.
 
 ## Open the Tutorial
 
-Start here: [00_START_HERE.ipynb](https://colab.research.google.com/github/njszym/MRS-XRD-Tutorial/blob/main/00_START_HERE.ipynb)
+Start here: [00_START_HERE.ipynb](https://colab.research.google.com/github/Szymanski-Group/MRS_CH08_Tutorial/blob/main/00_START_HERE.ipynb)
 
 ## Repository Layout
 
