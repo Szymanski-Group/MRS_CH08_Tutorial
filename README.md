@@ -9,11 +9,9 @@ Start here: [00_START_HERE.ipynb](https://colab.research.google.com/github/Szyma
 ## Repository Layout
 
 - `00_START_HERE.ipynb`: entry-point and Colab table of contents
-- `01_Pattern-Generation/`: physics-based synthetic pattern artifacts
-- `02_Conventional-Methods/`: search-match, correlation, and Rietveld-style workflows
-- `03_Machine-Learning/`: conventional ML (single-phase and multi-phase)
-- `04_Deep-Learning/`: NN/CNN modules and augmentation ablations
-- `05_Generative-AI/`: diffusion demo and structure sanity checks
-- `06_Challenge/`: open challenge notebook
+- `notebooks/`: consolidated tutorial notebooks
+- `notebooks/01_Pattern-Generation.ipynb`: modules 01a-01h (pattern generation)
+- `notebooks/02_Conventional-Methods.ipynb`: modules 02a-02c (conventional methods)
+- `notebooks/03_ML-Deep-Learning.ipynb`: module 03 (ML + deep learning, sections 03a-04f)
+- `notebooks/04_Challenge.ipynb`: module 04 (open challenge)
 - `data/`: CIFs, reference structures, and experimental/mystery patterns
-- `notebooks`: include the full runnable tutorial code directly in their code cells
