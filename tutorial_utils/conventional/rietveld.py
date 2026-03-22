@@ -97,7 +97,7 @@ def pearson_corr(a, b):
     return float(np.corrcoef(a, b)[0, 1])
 
 
-def refine_phase_sequential(
+def refine_background_step(
     two_theta,
     y_obs,
     base_structure,
@@ -109,22 +109,45 @@ def refine_phase_sequential(
     background_degree=6,
     fwhm_init=0.30,
     gauss_frac=0.2,
-    lattice_scale_bounds=(0.98, 1.02),
-    fwhm_bounds=(0.05, 1.20),
-    lattice_maxiter=60,
-    width_maxiter=50,
 ):
+    """Step 1: refine background (and phase scale) with fixed lattice/width."""
     x_scaled = 2.0 * (two_theta - min_angle) / (max_angle - min_angle) - 1.0
-
-    peak_pos_0, peak_int_0 = get_stick_pattern(
+    peak_pos, peak_int = get_stick_pattern(
         base_structure,
         calculator,
         min_angle=min_angle,
         max_angle=max_angle,
         intensity_threshold=intensity_threshold,
     )
-    y_phase_0 = simulate_profile(two_theta, peak_pos_0, peak_int_0, fwhm=fwhm_init, gauss_frac=gauss_frac)
-    _, bg_coeffs, y_bg, y_fit_1 = fit_background_and_scale(y_obs, y_phase_0, x_scaled, degree=background_degree)
+    y_phase = simulate_profile(two_theta, peak_pos, peak_int, fwhm=fwhm_init, gauss_frac=gauss_frac)
+    phase_scale, bg_coeffs, y_bg, y_fit = fit_background_and_scale(y_obs, y_phase, x_scaled, degree=background_degree)
+    return {
+        "phase_scale": phase_scale,
+        "bg_coeffs": bg_coeffs,
+        "y_bg": y_bg,
+        "y_fit": y_fit,
+        "peak_pos": peak_pos,
+        "peak_int": peak_int,
+        "y_phase": y_phase,
+    }
+
+
+def refine_lattice_step(
+    two_theta,
+    y_obs,
+    base_structure,
+    calculator,
+    y_bg,
+    *,
+    min_angle=10.0,
+    max_angle=80.0,
+    intensity_threshold=1.0,
+    fwhm_init=0.30,
+    gauss_frac=0.2,
+    lattice_scale_bounds=(0.98, 1.02),
+    lattice_maxiter=60,
+):
+    """Step 2: refine lattice scales with background fixed."""
 
     def lattice_objective(scales):
         s = np.clip(np.asarray(scales, dtype=float), *lattice_scale_bounds)
@@ -149,20 +172,44 @@ def refine_phase_sequential(
     )
     best_scales = np.clip(np.asarray(res_lat.x, dtype=float), *lattice_scale_bounds)
 
-    structure_2 = apply_lattice_scales(base_structure, best_scales)
-    peak_pos_2, peak_int_2 = get_stick_pattern(
-        structure_2,
+    refined_structure = apply_lattice_scales(base_structure, best_scales)
+    peak_pos, peak_int = get_stick_pattern(
+        refined_structure,
         calculator,
         min_angle=min_angle,
         max_angle=max_angle,
         intensity_threshold=intensity_threshold,
     )
-    y_phase_2 = simulate_profile(two_theta, peak_pos_2, peak_int_2, fwhm=fwhm_init, gauss_frac=gauss_frac)
-    _, y_fit_2 = fit_scale_only(y_obs, y_phase_2, y_bg)
+    y_phase = simulate_profile(two_theta, peak_pos, peak_int, fwhm=fwhm_init, gauss_frac=gauss_frac)
+    phase_scale, y_fit = fit_scale_only(y_obs, y_phase, y_bg)
+    return {
+        "scales": best_scales,
+        "refined_structure": refined_structure,
+        "peak_pos": peak_pos,
+        "peak_int": peak_int,
+        "y_phase": y_phase,
+        "phase_scale": phase_scale,
+        "y_fit": y_fit,
+    }
+
+
+def refine_width_step(
+    two_theta,
+    y_obs,
+    peak_pos,
+    peak_int,
+    y_bg,
+    *,
+    fwhm_init=0.30,
+    gauss_frac=0.2,
+    fwhm_bounds=(0.05, 1.20),
+    width_maxiter=50,
+):
+    """Step 3: refine peak width with lattice/background fixed."""
 
     def width_objective(width):
         w = float(np.clip(width[0], *fwhm_bounds))
-        y_phase = simulate_profile(two_theta, peak_pos_2, peak_int_2, fwhm=w, gauss_frac=gauss_frac)
+        y_phase = simulate_profile(two_theta, peak_pos, peak_int, fwhm=w, gauss_frac=gauss_frac)
         _, y_fit = fit_scale_only(y_obs, y_phase, y_bg)
         return np.mean((y_obs - y_fit) ** 2)
 
@@ -175,18 +222,80 @@ def refine_phase_sequential(
     )
     best_fwhm = float(np.clip(res_w.x[0], *fwhm_bounds))
 
-    y_phase_3 = simulate_profile(two_theta, peak_pos_2, peak_int_2, fwhm=best_fwhm, gauss_frac=gauss_frac)
-    scale_3, y_fit_3 = fit_scale_only(y_obs, y_phase_3, y_bg)
+    y_phase = simulate_profile(two_theta, peak_pos, peak_int, fwhm=best_fwhm, gauss_frac=gauss_frac)
+    phase_scale, y_fit = fit_scale_only(y_obs, y_phase, y_bg)
+    return {
+        "fwhm": best_fwhm,
+        "phase_scale": phase_scale,
+        "y_phase": y_phase,
+        "y_fit": y_fit,
+    }
+
+
+def refine_phase_sequential(
+    two_theta,
+    y_obs,
+    base_structure,
+    calculator,
+    *,
+    min_angle=10.0,
+    max_angle=80.0,
+    intensity_threshold=1.0,
+    background_degree=6,
+    fwhm_init=0.30,
+    gauss_frac=0.2,
+    lattice_scale_bounds=(0.98, 1.02),
+    fwhm_bounds=(0.05, 1.20),
+    lattice_maxiter=60,
+    width_maxiter=50,
+):
+    step1 = refine_background_step(
+        two_theta,
+        y_obs,
+        base_structure,
+        calculator,
+        min_angle=min_angle,
+        max_angle=max_angle,
+        intensity_threshold=intensity_threshold,
+        background_degree=background_degree,
+        fwhm_init=fwhm_init,
+        gauss_frac=gauss_frac,
+    )
+    step2 = refine_lattice_step(
+        two_theta,
+        y_obs,
+        base_structure,
+        calculator,
+        step1["y_bg"],
+        min_angle=min_angle,
+        max_angle=max_angle,
+        intensity_threshold=intensity_threshold,
+        fwhm_init=fwhm_init,
+        gauss_frac=gauss_frac,
+        lattice_scale_bounds=lattice_scale_bounds,
+        lattice_maxiter=lattice_maxiter,
+    )
+    step3 = refine_width_step(
+        two_theta,
+        y_obs,
+        step2["peak_pos"],
+        step2["peak_int"],
+        step1["y_bg"],
+        fwhm_init=fwhm_init,
+        gauss_frac=gauss_frac,
+        fwhm_bounds=fwhm_bounds,
+        width_maxiter=width_maxiter,
+    )
 
     return {
-        "bg_coeffs": bg_coeffs,
-        "scales": best_scales,
-        "fwhm": best_fwhm,
-        "scale": scale_3,
-        "y_bg": y_bg,
-        "y_fit_step1": y_fit_1,
-        "y_fit_step2": y_fit_2,
-        "y_fit_final": y_fit_3,
-        "rwp": compute_rwp(y_obs, y_fit_3),
-        "pearson": pearson_corr(y_obs, y_fit_3),
+        "bg_coeffs": step1["bg_coeffs"],
+        "scales": step2["scales"],
+        "fwhm": step3["fwhm"],
+        "scale": step3["phase_scale"],
+        "y_bg": step1["y_bg"],
+        "y_fit_step1": step1["y_fit"],
+        "y_fit_step2": step2["y_fit"],
+        "y_fit_final": step3["y_fit"],
+        "rwp": compute_rwp(y_obs, step3["y_fit"]),
+        "pearson": pearson_corr(y_obs, step3["y_fit"]),
     }
