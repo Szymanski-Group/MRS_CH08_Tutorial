@@ -9,7 +9,6 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Optional, Sequence
 
-from .sections import challenge_baseline as s04a
 from .sections import conventional_profile_correlation as s02b
 from .sections import conventional_rietveld as s02c
 from .sections import conventional_search_match as s02a
@@ -431,41 +430,3 @@ def run_mixture_of_experts(
     )
     s03h.main()
     return s03h.OUTPUT_DIR
-
-
-def run_challenge_baseline(
-    top_k_to_print: int = 5,
-    max_experiment_patterns: Optional[int] = None,
-    output_dir: Optional[str] = None,
-    show_steps: bool = True,
-):
-    _set_if_not_none(
-        s04a,
-        TOP_K_TO_PRINT=top_k_to_print,
-        MAX_EXPERIMENT_PATTERNS=max_experiment_patterns,
-        OUTPUT_DIR=_maybe_path(output_dir),
-    )
-    _print_steps(
-        "Challenge Baseline (Profile Correlation)",
-        (
-            "Load mystery patterns and reference library",
-            "Rank phases by profile correlation",
-            "Save summary plots",
-            "Use predictions for ground-truth comparison",
-        ),
-        show_steps,
-    )
-    s04a.main()
-    return s04a.OUTPUT_DIR
-
-
-def get_challenge_predictions():
-    """Return top-1 predicted phase for each challenge pattern."""
-    ref_lib = s04a.load_reference_stick_library(sorted(Path("data/reference_structures").glob("*.cif")))
-    mystery_files = sorted(Path("data/challenge/mystery_patterns").glob("*.xy"))
-    predictions = []
-    for fpath in mystery_files:
-        tt, y = s04a.load_experimental_profile(fpath)
-        by_pearson, _, _ = s04a.rank_phases(y, tt, ref_lib)
-        predictions.append((fpath.name, by_pearson[0]["phase"]))
-    return predictions

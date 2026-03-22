@@ -7,6 +7,8 @@ from pymatgen.analysis.diffraction.xrd import XRDCalculator
 from pymatgen.core import Structure
 from scipy.optimize import minimize
 
+DEFAULT_WAVELENGTH = "CuKa"
+
 
 def normalize_0_100(y):
     y = np.asarray(y, dtype=float)
@@ -30,6 +32,10 @@ def load_experimental_profile(xy_file, min_angle=10.0, max_angle=80.0, baseline_
 
 def load_reference_structures(cif_files):
     return {Path(cif).stem: Structure.from_file(cif) for cif in cif_files}
+
+
+def make_calculator(wavelength=DEFAULT_WAVELENGTH):
+    return XRDCalculator(wavelength=wavelength)
 
 
 def apply_lattice_scales(structure, scales):
