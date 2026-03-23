@@ -38,7 +38,6 @@ GAUSS_FRAC = 0.2
 BASELINE_PERCENTILE = 5.0
 
 # Reporting
-MAX_EXPERIMENT_PATTERNS = None
 TOP_K_TO_PRINT = 5
 
 # Plot style (matching Slide-27 sizing)
@@ -218,8 +217,6 @@ def main():
     OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
 
     exp_files = sorted(EXPERIMENT_DIR.glob("*.xy"))
-    if MAX_EXPERIMENT_PATTERNS is not None:
-        exp_files = exp_files[:MAX_EXPERIMENT_PATTERNS]
 
     reference_library = load_reference_stick_library(sorted(REFERENCE_DIR.glob("*.cif")))
 

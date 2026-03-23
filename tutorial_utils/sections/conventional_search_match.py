@@ -33,7 +33,6 @@ PLOT_MIN_ANGLE = 10.0
 PLOT_MAX_ANGLE = 80.0
 WAVELENGTH = "CuKa"
 WAVELENGTH_ANGSTROM = 1.5406
-MAX_EXPERIMENT_PATTERNS = None
 TOP_K_TO_PRINT = 5
 
 # Peak detection
@@ -267,8 +266,6 @@ def main():
     OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
 
     exp_files = sorted(EXPERIMENT_DIR.glob("*.xy"))
-    if MAX_EXPERIMENT_PATTERNS is not None:
-        exp_files = exp_files[:MAX_EXPERIMENT_PATTERNS]
 
     refs = load_reference_library(sorted(REFERENCE_DIR.glob("*.cif")))
     all_rows = []

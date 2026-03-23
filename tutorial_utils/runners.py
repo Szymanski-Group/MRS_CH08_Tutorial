@@ -42,14 +42,12 @@ def _print_steps(title: str, steps: Sequence[str], show_steps: bool):
 
 def run_search_match(
     top_k_to_print: int = 3,
-    max_experiment_patterns: Optional[int] = 4,
     output_dir: Optional[str] = None,
     show_steps: bool = True,
 ):
     _set_if_not_none(
         s02a,
         TOP_K_TO_PRINT=top_k_to_print,
-        MAX_EXPERIMENT_PATTERNS=max_experiment_patterns,
         OUTPUT_DIR=_maybe_path(output_dir),
     )
     _print_steps(
@@ -68,7 +66,6 @@ def run_search_match(
 
 def run_profile_correlation(
     top_k_to_print: int = 3,
-    max_experiment_patterns: Optional[int] = 4,
     fwhm: Optional[float] = None,
     gauss_frac: Optional[float] = None,
     output_dir: Optional[str] = None,
@@ -77,7 +74,6 @@ def run_profile_correlation(
     _set_if_not_none(
         s02b,
         TOP_K_TO_PRINT=top_k_to_print,
-        MAX_EXPERIMENT_PATTERNS=max_experiment_patterns,
         FWHM=fwhm,
         GAUSS_FRAC=gauss_frac,
         OUTPUT_DIR=_maybe_path(output_dir),
