@@ -151,15 +151,16 @@ def rank_phases(exp_profile, exp_two_theta, reference_library):
     return by_pearson, by_cosine, simulated_profiles
 
 
+def format_topk_summary(rows, score_key):
+    top_rows = rows[:TOP_K_TO_PRINT]
+    return ", ".join(f"{row['phase']} ({row[score_key]:.3f})" for row in top_rows)
+
+
 def print_rank_table(pattern_name, rows, score_key, label):
-    print(f"\n{pattern_name}: top {TOP_K_TO_PRINT} phases by {label}")
-    print("rank  phase             score")
-    print("----  ----------------  ------")
-    for i, row in enumerate(rows[:TOP_K_TO_PRINT], start=1):
-        print(f"{i:>4}  {row['phase']:<16}  {row[score_key]:>6.3f}")
+    print(f"  {label}: {format_topk_summary(rows, score_key)}")
 
 
-def plot_summary(pattern_name, two_theta, exp_profile, best_pearson, best_cosine, simulated_profiles):
+def plot_summary(pattern_name, two_theta, exp_profile, best_pearson, best_cosine, simulated_profiles, show_plot=True):
     fig, axes = plt.subplots(nrows=3, ncols=1, figsize=FIGSIZE, sharex=True)
 
     # 1) Experimental profile
@@ -195,7 +196,9 @@ def plot_summary(pattern_name, two_theta, exp_profile, best_pearson, best_cosine
     plt.tight_layout()
     plt.savefig(out_file, dpi=200)
     plt.close(fig)
-    print(f"  Saved plot: {out_file}")
+    if show_plot:
+        display(Image(filename=str(out_file)))
+    return out_file
 
 
 def main():
@@ -208,9 +211,7 @@ def main():
     reference_library = load_reference_stick_library(sorted(REFERENCE_DIR.glob("*.cif")))
 
     all_rows = []
-    print("\n=== Full-Profile Correlation Demo (Pearson + Cosine) ===")
-    print(f"Experimental patterns: {len(exp_files)}")
-    print(f"Reference phases:      {len(reference_library)}")
+    print(f"Profile correlation | patterns={len(exp_files)} refs={len(reference_library)}")
 
     for exp_file in exp_files:
         pattern_name = exp_file.stem
@@ -222,7 +223,7 @@ def main():
             reference_library,
         )
 
-        print(f"\n--- {pattern_name} ---")
+        print(f"\n{pattern_name}")
         print_rank_table(pattern_name, by_pearson, "pearson", "Pearson")
         print_rank_table(pattern_name, by_cosine, "cosine", "Cosine")
 
@@ -251,4 +252,4 @@ def main():
         writer.writeheader()
         writer.writerows(all_rows)
 
-    print(f"\nSaved ranking table: {csv_file}")
+    print(f"\nRankings saved: {csv_file}")

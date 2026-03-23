@@ -181,18 +181,14 @@ def rank_phases(obs_peaks, refs):
     )
 
 
+def format_topk_summary(rows, score_key):
+    filtered = [r for r in rows if r[score_key] > 0.0] or rows
+    top_rows = filtered[:TOP_K_TO_PRINT]
+    return ", ".join(f"{row['phase']} ({row[score_key]:.3f})" for row in top_rows)
+
+
 def print_rank_table(pattern_name, rows, score_key, label):
-    rows = [r for r in rows if r[score_key] > 0.0] or rows
-    print(f"\n{pattern_name}: top {TOP_K_TO_PRINT} phases by {label}")
-    print("rank  phase             score     matches/used  mean |Δ2θ|")
-    print("----  ----------------  --------  ------------  ----------")
-    for i, row in enumerate(rows[:TOP_K_TO_PRINT], start=1):
-        mean_str = "-" if not np.isfinite(row["mean_delta_2theta"]) \
-                else f"{row['mean_delta_2theta']:.3f}"
-        print(
-            f"{i:>4}  {row['phase']:<16}  {row[score_key]:>8.3f}  "
-            f"{row['n_match']:>4}/{row['n_used']:<7}  {mean_str:>10}"
-        )
+    print(f"  {label}: {format_topk_summary(rows, score_key)}")
 
 
 def phase_title_label(phase_name):
@@ -201,7 +197,7 @@ def phase_title_label(phase_name):
     return f"{formula} (s.g. {sg})"
 
 
-def plot_summary(pattern_name, tt, intensity, obs_peaks, best_m, best_f, refs):
+def plot_summary(pattern_name, tt, intensity, obs_peaks, best_m, best_f, refs, show_plot=True):
     fig, axes = plt.subplots(3, 1, figsize=FIGSIZE, sharex=True)
 
     # Experimental profile + detected peaks
@@ -249,7 +245,9 @@ def plot_summary(pattern_name, tt, intensity, obs_peaks, best_m, best_f, refs):
     plt.tight_layout()
     plt.savefig(out, dpi=200)
     plt.close(fig)
-    print(f"  Saved plot: {out}")
+    if show_plot:
+        display(Image(filename=str(out)))
+    return out
 
 
 def main():
@@ -262,17 +260,14 @@ def main():
     refs = load_reference_library(sorted(REFERENCE_DIR.glob("*.cif")))
     all_rows = []
 
-    print("\n=== Peak Search-Match Demo (de Wolff + Smith-Snyder) ===")
-    print(f"Experimental patterns: {len(exp_files)}")
-    print(f"Reference phases:      {len(refs)}")
+    print(f"Search-match | patterns={len(exp_files)} refs={len(refs)}")
 
     for exp_file in exp_files:
         name = exp_file.stem
         tt, intensity = load_pattern(exp_file)
         _, obs_peaks = detect_peaks(tt, intensity)
 
-        print(f"\n--- {name} ---")
-        print(f"Detected peaks: {len(obs_peaks)}")
+        print(f"\n{name} | peaks={len(obs_peaks)}")
 
         by_m, by_f = rank_phases(obs_peaks, refs)
         print_rank_table(name, by_m, "de_wolff", "de Wolff")
@@ -302,4 +297,4 @@ def main():
         writer.writeheader()
         writer.writerows(all_rows)
 
-    print(f"\nSaved ranking table: {csv_file}")
+    print(f"\nRankings saved: {csv_file}")

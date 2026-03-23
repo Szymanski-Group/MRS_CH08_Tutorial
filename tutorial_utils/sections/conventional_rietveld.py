@@ -227,19 +227,19 @@ def refine_phase_sequential(two_theta, y_obs, base_structure, calculator):
     }
 
 
+def format_topk_rwp(rows):
+    top_rows = rows[:TOP_K_TO_PRINT]
+    return ", ".join(
+        f"{row['phase']} (Rwp={row['rwp']:.2f}, r={row['pearson']:.3f})"
+        for row in top_rows
+    )
+
+
 def print_rank_table(pattern_name, rows):
-    print(f"\n{pattern_name}: top {TOP_K_TO_PRINT} phases by final Rwp (lower is better)")
-    print("rank  phase             Rwp(%)  Pearson   a_scale  b_scale  c_scale  FWHM")
-    print("----  ----------------  ------  -------  -------  -------  -------  -----")
-    for i, row in enumerate(rows[:TOP_K_TO_PRINT], start=1):
-        s = row["scales"]
-        print(
-            f"{i:>4}  {row['phase']:<16}  {row['rwp']:>6.2f}  {row['pearson']:>7.3f}  "
-            f"{s[0]:>7.4f}  {s[1]:>7.4f}  {s[2]:>7.4f}  {row['fwhm']:>5.3f}"
-        )
+    print(f"  Rwp: {format_topk_rwp(rows)}")
 
 
-def plot_refinement_summary(pattern_name, two_theta, y_obs, best_row):
+def plot_refinement_summary(pattern_name, two_theta, y_obs, best_row, show_plot=True):
     fig, axes = plt.subplots(nrows=3, ncols=1, figsize=FIGSIZE, sharex=True)
 
     # Step 1: background refinement
@@ -273,7 +273,9 @@ def plot_refinement_summary(pattern_name, two_theta, y_obs, best_row):
     plt.tight_layout()
     plt.savefig(out_file, dpi=200)
     plt.close(fig)
-    print(f"  Saved plot: {out_file}")
+    if show_plot:
+        display(Image(filename=str(out_file)))
+    return out_file
 
 
 def main():
@@ -290,10 +292,7 @@ def main():
     calculator = XRDCalculator(wavelength=WAVELENGTH)
 
     all_rows = []
-    print("\n=== Sequential Rietveld-Style Refinement Demo ===")
-    print("Refinement order: (1) background -> (2) lattice params -> (3) peak width")
-    print(f"Experimental patterns: {len(exp_files)}")
-    print(f"Reference phases:      {len(structures)}")
+    print(f"Rietveld sequential | patterns={len(exp_files)} refs={len(structures)}")
 
     for exp_file in exp_files:
         pattern_name = exp_file.stem
@@ -307,7 +306,7 @@ def main():
         rows = sorted(rows, key=lambda r: r["rwp"])
         best_row = rows[0]
 
-        print(f"\n--- {pattern_name} ---")
+        print(f"\n{pattern_name}")
         print_rank_table(pattern_name, rows)
         plot_refinement_summary(pattern_name, two_theta, y_obs, best_row)
 
@@ -334,4 +333,4 @@ def main():
         writer.writeheader()
         writer.writerows(all_rows)
 
-    print(f"\nSaved ranking table: {csv_file}")
+    print(f"\nRankings saved: {csv_file}")
