@@ -53,6 +53,7 @@ FIGSIZE = (8, 5)
 AXIS_LABEL_SIZE = 18
 TICK_LABEL_SIZE = 15
 TITLE_SIZE = 15
+DEFAULT_DISPLAY_SIZE = 1600
 
 
 def normalize_0_100(y):
@@ -196,7 +197,17 @@ def phase_title_label(phase_name):
     return f"{formula} (s.g. {sg})"
 
 
-def plot_summary(pattern_name, tt, intensity, obs_peaks, best_m, best_f, refs, show_plot=True):
+def plot_summary(
+    pattern_name,
+    tt,
+    intensity,
+    obs_peaks,
+    best_m,
+    best_f,
+    refs,
+    show_plot=True,
+    display_size=DEFAULT_DISPLAY_SIZE,
+):
     fig, axes = plt.subplots(3, 1, figsize=FIGSIZE, sharex=True)
 
     # Experimental profile + detected peaks
@@ -245,7 +256,10 @@ def plot_summary(pattern_name, tt, intensity, obs_peaks, best_m, best_f, refs, s
     plt.savefig(out, dpi=200)
     plt.close(fig)
     if show_plot:
-        display(Image(filename=str(out), width=1600))
+        image_kwargs = {"filename": str(out)}
+        if display_size is not None:
+            image_kwargs["width"] = int(display_size)
+        display(Image(**image_kwargs))
     return out
 
 

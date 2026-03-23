@@ -46,6 +46,7 @@ FIGSIZE = (8, 7)
 AXIS_LABEL_SIZE = 18
 TICK_LABEL_SIZE = 15
 TITLE_SIZE = 15
+DEFAULT_DISPLAY_SIZE = 1600
 
 
 def normalize_0_100(y):
@@ -160,7 +161,16 @@ def print_rank_table(pattern_name, rows, score_key, label):
     print(f"  {label}: {format_topk_summary(rows, score_key)}")
 
 
-def plot_summary(pattern_name, two_theta, exp_profile, best_pearson, best_cosine, simulated_profiles, show_plot=True):
+def plot_summary(
+    pattern_name,
+    two_theta,
+    exp_profile,
+    best_pearson,
+    best_cosine,
+    simulated_profiles,
+    show_plot=True,
+    display_size=DEFAULT_DISPLAY_SIZE,
+):
     fig, axes = plt.subplots(nrows=3, ncols=1, figsize=FIGSIZE, sharex=True)
 
     # 1) Experimental profile
@@ -197,7 +207,10 @@ def plot_summary(pattern_name, two_theta, exp_profile, best_pearson, best_cosine
     plt.savefig(out_file, dpi=200)
     plt.close(fig)
     if show_plot:
-        display(Image(filename=str(out_file)))
+        image_kwargs = {"filename": str(out_file)}
+        if display_size is not None:
+            image_kwargs["width"] = int(display_size)
+        display(Image(**image_kwargs))
     return out_file
 
 
