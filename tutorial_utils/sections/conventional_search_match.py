@@ -21,6 +21,7 @@ from scipy.signal import find_peaks
 from pymatgen.core import Structure
 from pymatgen.analysis.diffraction.xrd import XRDCalculator
 
+print("RELOAD")
 
 # Input/output
 EXPERIMENT_DIR = Path("data/exp_patterns/one_phase")
