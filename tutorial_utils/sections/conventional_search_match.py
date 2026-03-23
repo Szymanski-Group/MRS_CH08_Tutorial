@@ -21,8 +21,6 @@ from scipy.signal import find_peaks
 from pymatgen.core import Structure
 from pymatgen.analysis.diffraction.xrd import XRDCalculator
 
-print("RELOAD")
-
 # Input/output
 EXPERIMENT_DIR = Path("data/exp_patterns/one_phase")
 REFERENCE_DIR = Path("data/reference_structures")
@@ -247,7 +245,7 @@ def plot_summary(pattern_name, tt, intensity, obs_peaks, best_m, best_f, refs, s
     plt.savefig(out, dpi=200)
     plt.close(fig)
     if show_plot:
-        display(Image(filename=str(out), width=400))
+        display(Image(filename=str(out), width=900))
     return out
 
 
