@@ -1,24 +1,16 @@
-# Auto-extracted module from notebook code cell.
-# Detailed implementation for tutorial sections.
-
 import os
 from IPython.display import Image, display
 
-# Inline tutorial script
 from pathlib import Path
 import csv
 
-# For handling arrays
 import numpy as np
 
-# For plotting
 import matplotlib.pyplot as plt
 
-# To load structures and compute XRD stick patterns
 from pymatgen.core import Structure
 from pymatgen.analysis.diffraction.xrd import XRDCalculator
 
-# Neural-network model
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler, MultiLabelBinarizer
 from sklearn.metrics import precision_score, recall_score, f1_score
@@ -27,13 +19,10 @@ import torch
 import torch.nn as nn
 from torch.utils.data import DataLoader, TensorDataset
 
-
-# Input/output
 EXPERIMENT_DIR = Path("data/exp_patterns/multi_phase")
 REFERENCE_DIR = Path("data/reference_structures")
 OUTPUT_DIR = Path("outputs/dl/cnn_random_shifts")
 
-# Pattern settings
 MIN_ANGLE = 10.0
 MAX_ANGLE = 80.0
 NUM_POINTS = 1400
@@ -41,12 +30,10 @@ WAVELENGTH = "CuKa"
 WAVELENGTH_ANGSTROM = 1.5406
 REFERENCE_INTENSITY_THRESHOLD = 1.0
 
-# Synthetic-data settings
 SYNTH_SAMPLES_PER_FORMULA = 60
 RANDOM_SEED = 42
 SINGLE_PHASE_FRACTION = 0.15
 
-# Neural-net settings (fixed architecture; no tuning)
 CNN_CONV_CHANNELS = (16, 32)
 CNN_KERNEL_SIZES = (7, 5)
 CNN_POOL_KERNEL_SIZE = 2
@@ -58,23 +45,16 @@ NN_MAX_ITER = 220
 PREDICTION_THRESHOLD = 0.50
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-# Synthetic-pattern settings (random peak shifts only; no artifact model)
 IDEAL_FWHM = 0.18
 IDEAL_ETA = 0.0
 MAX_PEAK_SHIFT_MAGNITUDE = 0.5
 
-# Split
 VAL_FRACTION = 0.20
 
-
-# -----------------------------
-# Pattern simulation utilities
-# -----------------------------
 def normalize_0_100(y):
     y = np.asarray(y, dtype=float)
     y = y - y.min()
     return 100.0 * y / np.clip(y.max(), 1e-12, None)
-
 
 def pseudo_voigt_profile(two_theta_grid, centers, fwhm, eta):
     dx = two_theta_grid[:, None] - centers[None, :]
@@ -83,7 +63,6 @@ def pseudo_voigt_profile(two_theta_grid, centers, fwhm, eta):
     gauss = np.exp(-0.5 * (dx / sigma[None, :]) ** 2)
     lorentz = (gamma[None, :] ** 2) / (dx**2 + gamma[None, :] ** 2)
     return (1.0 - eta) * gauss + eta * lorentz
-
 
 def load_reference_sticks(cif_files):
     calc = XRDCalculator(wavelength=WAVELENGTH)
@@ -103,7 +82,6 @@ def load_reference_sticks(cif_files):
 
     return refs_by_formula
 
-
 def simulate_component_profile(two_theta_grid, base_pos, base_int, rng):
     if len(base_pos) == 0:
         return np.zeros_like(two_theta_grid)
@@ -120,7 +98,6 @@ def simulate_component_profile(two_theta_grid, base_pos, base_int, rng):
     profile = pseudo_voigt_profile(two_theta_grid, peak_pos, fwhm, IDEAL_ETA) @ peak_int
     return profile / np.clip(profile.max(), 1e-12, None)
 
-
 def simulate_multiphase_profile(two_theta_grid, formula_list, refs_by_formula, rng):
     components = []
     for formula in formula_list:
@@ -133,7 +110,6 @@ def simulate_multiphase_profile(two_theta_grid, formula_list, refs_by_formula, r
         peaks += w * comp
 
     return normalize_0_100(peaks)
-
 
 def build_synthetic_multiphase_dataset(refs_by_formula, two_theta_grid, rng):
     formulas = sorted(refs_by_formula.keys())
@@ -162,7 +138,6 @@ def build_synthetic_multiphase_dataset(refs_by_formula, two_theta_grid, rng):
 
     return np.asarray(X), y_labels
 
-
 def preprocess_experimental_pattern(xy_file, two_theta_grid):
     data = np.loadtxt(xy_file)
     x = data[:, 0]
@@ -175,13 +150,8 @@ def preprocess_experimental_pattern(xy_file, two_theta_grid):
     y_interp = np.interp(two_theta_grid, x, y)
     return normalize_0_100(y_interp)
 
-
-# -----------------------------
-# Multi-label NN utilities
-# -----------------------------
 def labels_from_filename(file_stem):
     return file_stem.split("_")
-
 
 class SimpleConvNet(nn.Module):
     def __init__(self, n_outputs):
@@ -218,10 +188,8 @@ class SimpleConvNet(nn.Module):
         x = self.features(x)
         return self.classifier(x)
 
-
 def build_simple_nn(n_outputs):
     return SimpleConvNet(n_outputs).to(DEVICE)
-
 
 def fit_simple_nn(model, X_train, y_train):
     scaler = StandardScaler()
@@ -261,7 +229,6 @@ def fit_simple_nn(model, X_train, y_train):
 
     return scaler, np.asarray(loss_curve, dtype=float)
 
-
 def get_label_scores(model, scaler, X):
     X_scaled = scaler.transform(X).astype(np.float32)
     X_tensor = torch.from_numpy(X_scaled[:, None, :]).to(DEVICE)
@@ -273,17 +240,14 @@ def get_label_scores(model, scaler, X):
 
     return scores
 
-
 def predict_binary_labels(scores, threshold=PREDICTION_THRESHOLD):
     return (scores >= threshold).astype(int)
-
 
 def compute_micro_metrics(y_true_bin, y_pred_bin):
     precision_micro = precision_score(y_true_bin, y_pred_bin, average="micro", zero_division=0)
     recall_micro = recall_score(y_true_bin, y_pred_bin, average="micro", zero_division=0)
     f1_micro = f1_score(y_true_bin, y_pred_bin, average="micro", zero_division=0)
     return precision_micro, recall_micro, f1_micro
-
 
 def plot_loss_curve(train_loss_curve):
     fig, ax = plt.subplots(figsize=(7, 4.5))
@@ -302,7 +266,6 @@ def plot_loss_curve(train_loss_curve):
     plt.savefig(out_file, dpi=200)
     plt.close(fig)
     print(f"Saved plot: {out_file}")
-
 
 def plot_test_metric_summary(precision_micro, recall_micro, f1_micro):
     fig, ax = plt.subplots(figsize=(6.6, 4.5))
@@ -326,7 +289,6 @@ def plot_test_metric_summary(precision_micro, recall_micro, f1_micro):
     plt.savefig(out_file, dpi=200)
     plt.close(fig)
     print(f"Saved plot: {out_file}")
-
 
 def main():
     OUTPUT_DIR.mkdir(parents=True, exist_ok=True)

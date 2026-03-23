@@ -1,32 +1,22 @@
-# Auto-extracted module from notebook code cell.
-# Detailed implementation for tutorial sections.
-
 import glob
 from IPython.display import Image, display
 
-# Inline tutorial script
 from pathlib import Path
 import csv
 
-# For handling arrays
 import numpy as np
 
-# For plotting
 import matplotlib.pyplot as plt
 
-# For peak detection
 from scipy.signal import find_peaks
 
-# To load structures and compute XRD stick patterns
 from pymatgen.core import Structure
 from pymatgen.analysis.diffraction.xrd import XRDCalculator
 
-# Input/output
 EXPERIMENT_DIR = Path("data/exp_patterns/one_phase")
 REFERENCE_DIR = Path("data/reference_structures")
 OUTPUT_DIR = Path("outputs/conventional/search_match")
 
-# Pattern and FoM settings
 MIN_ANGLE = 10.0
 MAX_ANGLE = 100.0
 PLOT_MIN_ANGLE = 10.0
@@ -35,38 +25,32 @@ WAVELENGTH = "CuKa"
 WAVELENGTH_ANGSTROM = 1.5406
 TOP_K_TO_PRINT = 5
 
-# Peak detection
 BASELINE_PERCENTILE = 5.0
 PEAK_PROMINENCE_FRACTION = 0.02
 MIN_PEAK_DISTANCE_DEG = 0.22
 MAX_DETECTED_PEAKS = 30
 
-# Search-match
 REFERENCE_INTENSITY_THRESHOLD = 1.0
 NUM_OBS_LINES_FOR_FOM = 20
 MATCH_TOLERANCE_DEG = 0.25
 MIN_MATCHED_LINES_FOR_SCORE = 6
 
-# Plot style
 FIGSIZE = (8, 5)
 AXIS_LABEL_SIZE = 18
 TICK_LABEL_SIZE = 15
 TITLE_SIZE = 15
 DEFAULT_DISPLAY_SIZE = 1600
 
-
 def normalize_0_100(y):
     y = np.asarray(y, dtype=float)
     y = y - y.min()
     return 100.0 * y / np.clip(y.max(), 1e-12, None)
-
 
 def load_pattern(xy_file):
     data = np.loadtxt(xy_file)
     tt, intensity = data[:, 0], data[:, 1]
     keep = (tt >= MIN_ANGLE) & (tt <= MAX_ANGLE)
     return tt[keep], normalize_0_100(intensity[keep])
-
 
 def detect_peaks(tt, intensity):
     corrected = np.clip(intensity - np.percentile(intensity, BASELINE_PERCENTILE), 0.0, None)
@@ -83,7 +67,6 @@ def detect_peaks(tt, intensity):
     peak_idx = np.sort(peak_idx)
     return peak_idx, tt[peak_idx]
 
-
 def load_reference_library(cif_files):
     calc = XRDCalculator(wavelength=WAVELENGTH)
     refs = {}
@@ -95,11 +78,9 @@ def load_reference_library(cif_files):
         refs[cif.stem] = (tt[keep], inten[keep])
     return refs
 
-
 def q_from_two_theta(tt):
     theta = np.deg2rad(np.asarray(tt, dtype=float) / 2.0)
     return (2.0 * np.sin(theta) / WAVELENGTH_ANGSTROM) ** 2
-
 
 def greedy_match(obs_tt, ref_tt):
     candidates = []
@@ -117,7 +98,6 @@ def greedy_match(obs_tt, ref_tt):
         used_ref.add(j_ref)
         pairs.append((i_obs, j_ref, delta))
     return pairs
-
 
 def score_phase(obs_peaks, ref_peaks):
     n_used = min(NUM_OBS_LINES_FOR_FOM, len(obs_peaks))
@@ -151,10 +131,8 @@ def score_phase(obs_peaks, ref_peaks):
     mean_delta = float(np.mean(deltas))
     completeness = (n_match / n_possible) * (n_match / n_used)
 
-    # Smith-Snyder style FoM (adapted for search-match)
     smith_snyder = completeness / max(mean_delta, 1e-8)
 
-    # de Wolff style FoM (adapted for search-match)
     q_obs = q_from_two_theta(obs_used)
     q_ref = q_from_two_theta(ref_peaks)
     q_limit = q_obs[-1]
@@ -171,7 +149,6 @@ def score_phase(obs_peaks, ref_peaks):
         "mean_delta_2theta": mean_delta,
     }
 
-
 def rank_phases(obs_peaks, refs):
     rows = [{"phase": name, **score_phase(obs_peaks, tt)} for name, (tt, _) in refs.items()]
     return (
@@ -179,22 +156,18 @@ def rank_phases(obs_peaks, refs):
         sorted(rows, key=lambda r: r["smith_snyder"], reverse=True),
     )
 
-
 def format_topk_summary(rows, score_key):
     filtered = [r for r in rows if r[score_key] > 0.0] or rows
     top_rows = filtered[:TOP_K_TO_PRINT]
     return ", ".join(f"{row['phase']} ({row[score_key]:.3f})" for row in top_rows)
 
-
 def print_rank_table(pattern_name, rows, score_key, label):
     print(f"  {label}: {format_topk_summary(rows, score_key)}")
 
-
 def phase_title_label(phase_name):
-    # Convert "Li2MnO3_15" -> "Li2MnO3 (s.g. 15)"
+
     formula, sg = phase_name.rsplit("_", 1)
     return f"{formula} (s.g. {sg})"
-
 
 def plot_summary(
     pattern_name,
@@ -209,7 +182,6 @@ def plot_summary(
 ):
     fig, axes = plt.subplots(3, 1, figsize=FIGSIZE, sharex=True)
 
-    # Experimental profile + detected peaks
     axes[0].plot(tt, intensity, color="black", linewidth=2.2,
                  label="Experimental")
     axes[0].scatter(obs_peaks, np.interp(obs_peaks, tt, intensity),
@@ -218,7 +190,6 @@ def plot_summary(
                       fontsize=TITLE_SIZE, pad=4)
     axes[0].legend(fontsize=11, loc="upper right")
 
-    # Best by de Wolff
     phase_m = best_m["phase"]
     ref_tt_m, ref_i_m = refs[phase_m]
     axes[1].fill_between(tt, 0, intensity, color="black", alpha=0.10)
@@ -230,7 +201,6 @@ def plot_summary(
         pad=4,
     )
 
-    # Best by Smith-Snyder
     phase_f = best_f["phase"]
     ref_tt_f, ref_i_f = refs[phase_f]
     axes[2].fill_between(tt, 0, intensity, color="black", alpha=0.10)
@@ -260,7 +230,6 @@ def plot_summary(
             image_kwargs["width"] = int(display_size)
         display(Image(**image_kwargs))
     return out
-
 
 def main():
     OUTPUT_DIR.mkdir(parents=True, exist_ok=True)

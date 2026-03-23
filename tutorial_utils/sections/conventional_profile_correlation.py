@@ -1,64 +1,47 @@
-# Auto-extracted module from notebook code cell.
-# Detailed implementation for tutorial sections.
-
 import glob
 from IPython.display import Image, display
 
-# Inline tutorial script
 from pathlib import Path
 import csv
 
-# For handling arrays
 import numpy as np
 
-# For plotting
 import matplotlib.pyplot as plt
 
-# To load structures and compute XRD stick patterns
 from pymatgen.core import Structure
 from pymatgen.analysis.diffraction.xrd import XRDCalculator
 
-
-# Input/output
 EXPERIMENT_DIR = Path("data/exp_patterns/one_phase")
 REFERENCE_DIR = Path("data/reference_structures")
 OUTPUT_DIR = Path("outputs/conventional/profile_correlation")
 
-# Pattern and simulation settings
 MIN_ANGLE = 10.0
 MAX_ANGLE = 80.0
 WAVELENGTH = "CuKa"
 REFERENCE_INTENSITY_THRESHOLD = 1.0
 
-# Continuous-profile broadening (same spirit as Slide-21)
 FWHM = 0.30
 GAUSS_FRAC = 0.2
 
-# Experimental preprocessing
 BASELINE_PERCENTILE = 5.0
 
-# Reporting
 TOP_K_TO_PRINT = 5
 
-# Plot style (matching Slide-27 sizing)
 FIGSIZE = (8, 7)
 AXIS_LABEL_SIZE = 18
 TICK_LABEL_SIZE = 15
 TITLE_SIZE = 15
 DEFAULT_DISPLAY_SIZE = 1600
 
-
 def normalize_0_100(y):
     y = np.asarray(y, dtype=float)
     y = y - y.min()
     return 100.0 * y / np.clip(y.max(), 1e-12, None)
 
-
 def phase_title_label(phase_name):
-    # Convert "Li2MnO3_15" -> "Li2MnO3 (s.g. 15)"
+
     formula, sg = phase_name.rsplit("_", 1)
     return f"{formula} (s.g. {sg})"
-
 
 def load_experimental_profile(xy_file):
     data = np.loadtxt(xy_file)
@@ -69,12 +52,10 @@ def load_experimental_profile(xy_file):
     two_theta = two_theta[keep]
     intensity = intensity[keep]
 
-    # Simple baseline removal so correlations focus on pattern shape.
     intensity = np.clip(intensity - np.percentile(intensity, BASELINE_PERCENTILE), 0.0, None)
     intensity = normalize_0_100(intensity)
 
     return two_theta, intensity
-
 
 def load_reference_stick_library(cif_files):
     calculator = XRDCalculator(wavelength=WAVELENGTH)
@@ -96,7 +77,6 @@ def load_reference_stick_library(cif_files):
 
     return refs
 
-
 def simulate_continuous_profile(two_theta_grid, peak_pos, peak_intensity):
     if len(peak_pos) == 0:
         return np.zeros_like(two_theta_grid)
@@ -112,14 +92,12 @@ def simulate_continuous_profile(two_theta_grid, peak_pos, peak_intensity):
     profile = ((1.0 - GAUSS_FRAC) * gauss + GAUSS_FRAC * lorentz) @ peak_intensity
     return normalize_0_100(profile)
 
-
 def pearson_corr(a, b):
     a = np.asarray(a, dtype=float)
     b = np.asarray(b, dtype=float)
     if np.std(a) < 1e-12 or np.std(b) < 1e-12:
         return 0.0
     return float(np.corrcoef(a, b)[0, 1])
-
 
 def cosine_similarity(a, b):
     a = np.asarray(a, dtype=float)
@@ -128,7 +106,6 @@ def cosine_similarity(a, b):
     if denom < 1e-12:
         return 0.0
     return float(np.dot(a, b) / denom)
-
 
 def rank_phases(exp_profile, exp_two_theta, reference_library):
     rows = []
@@ -150,15 +127,12 @@ def rank_phases(exp_profile, exp_two_theta, reference_library):
     by_cosine = sorted(rows, key=lambda r: r["cosine"], reverse=True)
     return by_pearson, by_cosine, simulated_profiles
 
-
 def format_topk_summary(rows, score_key):
     top_rows = rows[:TOP_K_TO_PRINT]
     return ", ".join(f"{row['phase']} ({row[score_key]:.3f})" for row in top_rows)
 
-
 def print_rank_table(pattern_name, rows, score_key, label):
     print(f"  {label}: {format_topk_summary(rows, score_key)}")
-
 
 def plot_summary(
     pattern_name,
@@ -172,12 +146,10 @@ def plot_summary(
 ):
     fig, axes = plt.subplots(nrows=3, ncols=1, figsize=FIGSIZE, sharex=True)
 
-    # 1) Experimental profile
     axes[0].fill_between(two_theta, 0, exp_profile, color="black", alpha=0.15)
     axes[0].plot(two_theta, exp_profile, color="black", linewidth=2.2)
     axes[0].set_title(f"{pattern_name}: Experimental profile", fontsize=TITLE_SIZE, pad=4)
 
-    # 2) Best by Pearson
     pearson_phase = best_pearson["phase"]
     axes[1].fill_between(two_theta, 0, exp_profile, color="black", alpha=0.10)
     axes[1].plot(two_theta, exp_profile, color="black", linewidth=2.0, label="Experimental")
@@ -185,7 +157,6 @@ def plot_summary(
     axes[1].set_title(f"Best by Pearson: {phase_title_label(pearson_phase)}", fontsize=TITLE_SIZE, pad=4)
     axes[1].legend(fontsize=11, loc="upper right")
 
-    # 3) Best by Cosine
     cosine_phase = best_cosine["phase"]
     axes[2].fill_between(two_theta, 0, exp_profile, color="black", alpha=0.10)
     axes[2].plot(two_theta, exp_profile, color="black", linewidth=2.0, label="Experimental")
@@ -211,7 +182,6 @@ def plot_summary(
             image_kwargs["width"] = int(display_size)
         display(Image(**image_kwargs))
     return out_file
-
 
 def main():
     OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
