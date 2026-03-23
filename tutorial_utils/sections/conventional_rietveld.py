@@ -20,6 +20,7 @@ from scipy.optimize import minimize
 # To load structures and compute XRD stick patterns
 from pymatgen.core import Structure
 from pymatgen.analysis.diffraction.xrd import XRDCalculator
+from tutorial_utils.conventional import profile_correlation as pc
 
 
 # Input/output
@@ -48,6 +49,7 @@ WIDTH_MAXITER = 40
 MAX_EXPERIMENT_PATTERNS = None
 TOP_K_TO_PRINT = 5
 PATTERNS_TO_RUN = ["TiO2"]  # set to None to run all patterns
+PREFILTER_TOP_K = 5
 
 # Plot style (matching Slide-27 sizing)
 FIGSIZE = (8, 7)
@@ -299,7 +301,15 @@ def main():
     if MAX_EXPERIMENT_PATTERNS is not None:
         exp_files = exp_files[:MAX_EXPERIMENT_PATTERNS]
 
-    structures = load_reference_structures(sorted(REFERENCE_DIR.glob("*.cif")))
+    ref_cifs = sorted(REFERENCE_DIR.glob("*.cif"))
+    structures = load_reference_structures(ref_cifs)
+    ref_lib = pc.load_reference_stick_library(
+        ref_cifs,
+        min_angle=MIN_ANGLE,
+        max_angle=MAX_ANGLE,
+        wavelength=WAVELENGTH,
+        intensity_threshold=REFERENCE_INTENSITY_THRESHOLD,
+    )
     calculator = XRDCalculator(wavelength=WAVELENGTH)
 
     all_rows = []
@@ -309,8 +319,17 @@ def main():
         pattern_name = exp_file.stem
         two_theta, y_obs = load_experimental_profile(exp_file)
 
+        if PREFILTER_TOP_K is None:
+            keep_names = sorted(structures.keys())
+            candidate_structures = structures
+        else:
+            by_pearson, _, _ = pc.rank_phases(y_obs, two_theta, ref_lib, fwhm=FWHM_INIT, gauss_frac=GAUSS_FRAC)
+            n_keep = max(1, min(int(PREFILTER_TOP_K), len(structures)))
+            keep_names = [row["phase"] for row in by_pearson[:n_keep]]
+            candidate_structures = {name: structures[name] for name in keep_names if name in structures}
+
         rows = []
-        for phase, structure in structures.items():
+        for phase, structure in candidate_structures.items():
             result = refine_phase_sequential(two_theta, y_obs, structure, calculator)
             rows.append({"phase": phase, **result})
 
@@ -318,6 +337,10 @@ def main():
         best_row = rows[0]
 
         print(f"\n{pattern_name}")
+        print(
+            f"  Prefilter: {len(candidate_structures)}/{len(structures)} candidates"
+            + (f" | top: {', '.join(keep_names[:min(5, len(keep_names))])}" if keep_names else "")
+        )
         print_rank_table(pattern_name, rows)
         plot_refinement_summary(pattern_name, two_theta, y_obs, best_row)
 

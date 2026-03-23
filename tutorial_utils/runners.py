@@ -6,6 +6,10 @@ low-level implementation details to reusable module files.
 
 from __future__ import annotations
 
+import contextlib
+import csv
+import io
+import warnings
 from pathlib import Path
 from typing import Optional, Sequence
 
@@ -38,6 +42,92 @@ def _print_steps(title: str, steps: Sequence[str], show_steps: bool):
     print(f"\n{title}")
     for i, step in enumerate(steps, start=1):
         print(f"  Step {i}: {step}")
+
+
+def _run_section_main(module, compact_output: bool):
+    if not compact_output:
+        module.main()
+        return
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore", category=RuntimeWarning)
+        warnings.simplefilter("ignore", category=UserWarning)
+        with contextlib.redirect_stdout(io.StringIO()), contextlib.redirect_stderr(io.StringIO()):
+            module.main()
+
+
+def _read_csv_rows(csv_path: Path):
+    if not csv_path.exists():
+        return []
+    with open(csv_path, newline="") as f:
+        return list(csv.DictReader(f))
+
+
+def _as_float(value):
+    try:
+        return float(value)
+    except (TypeError, ValueError):
+        return None
+
+
+def _fmt(value, digits: int = 3):
+    number = _as_float(value)
+    if number is None:
+        return "n/a"
+    return f"{number:.{digits}f}"
+
+
+def _print_compact_ml_1phase_summary(output_dir: Path):
+    rows = _read_csv_rows(output_dir / "model_metrics.csv")
+    print("  Accuracy summary (validation/test):")
+    for row in rows:
+        print(
+            f"  - {row.get('model', 'model')}: "
+            f"{_fmt(row.get('validation_accuracy'))}/{_fmt(row.get('test_accuracy'))}"
+        )
+    print(f"  Saved outputs: {output_dir}")
+
+
+def _print_compact_ml_multiphase_summary(output_dir: Path):
+    rows = _read_csv_rows(output_dir / "model_test_metrics.csv")
+    print("  Multiphase test metrics (P/R/F1):")
+    for row in rows:
+        print(
+            f"  - {row.get('model', 'model')}: "
+            f"{_fmt(row.get('test_precision_micro'))}/"
+            f"{_fmt(row.get('test_recall_micro'))}/"
+            f"{_fmt(row.get('test_f1_micro'))} "
+            f"(thr={_fmt(row.get('threshold'), 2)})"
+        )
+    print(f"  Saved outputs: {output_dir}")
+
+
+def _print_compact_nn_1phase_summary(output_dir: Path):
+    rows = _read_csv_rows(output_dir / "nn_metrics.csv")
+    row = rows[0] if rows else {}
+    print(
+        "  Neural Net accuracy (validation/test): "
+        f"{_fmt(row.get('validation_accuracy'))}/{_fmt(row.get('test_accuracy'))}"
+    )
+    print(f"  Saved outputs: {output_dir}")
+
+
+def _print_compact_multilabel_nn_summary(output_dir: Path):
+    rows = _read_csv_rows(output_dir / "nn_metrics.csv")
+    row = rows[0] if rows else {}
+    print(
+        "  Validation P/R/F1: "
+        f"{_fmt(row.get('validation_precision_micro'))}/"
+        f"{_fmt(row.get('validation_recall_micro'))}/"
+        f"{_fmt(row.get('validation_f1_micro'))}"
+    )
+    print(
+        "  Test P/R/F1: "
+        f"{_fmt(row.get('test_precision_micro'))}/"
+        f"{_fmt(row.get('test_recall_micro'))}/"
+        f"{_fmt(row.get('test_f1_micro'))} "
+        f"(thr={_fmt(row.get('threshold'), 2)})"
+    )
+    print(f"  Saved outputs: {output_dir}")
 
 
 def run_search_match(
@@ -97,6 +187,7 @@ def run_rietveld_sequential(
     patterns_to_run: Optional[Sequence[str]] = ("TiO2", "ZrO2"),
     background_degree: Optional[int] = None,
     fwhm_init: Optional[float] = None,
+    prefilter_top_k: Optional[int] = 5,
     output_dir: Optional[str] = None,
     show_steps: bool = True,
 ):
@@ -106,6 +197,7 @@ def run_rietveld_sequential(
         PATTERNS_TO_RUN=list(patterns_to_run) if patterns_to_run is not None else None,
         BACKGROUND_DEGREE=background_degree,
         FWHM_INIT=fwhm_init,
+        PREFILTER_TOP_K=prefilter_top_k,
         OUTPUT_DIR=_maybe_path(output_dir),
     )
     _print_steps(
@@ -123,10 +215,11 @@ def run_rietveld_sequential(
 
 
 def run_ml_conv_1phase(
-    synth_samples_per_formula: int = 12,
+    synth_samples_per_formula: int = 80,
     random_seed: int = 42,
     output_dir: Optional[str] = None,
     show_steps: bool = True,
+    compact_output: bool = True,
 ):
     _set_if_not_none(
         s03a,
@@ -144,16 +237,19 @@ def run_ml_conv_1phase(
         ),
         show_steps,
     )
-    s03a.main()
+    _run_section_main(s03a, compact_output=compact_output)
+    if compact_output:
+        _print_compact_ml_1phase_summary(s03a.OUTPUT_DIR)
     return s03a.OUTPUT_DIR
 
 
 def run_ml_multiphase(
-    synth_samples_per_formula: int = 10,
+    synth_samples_per_formula: int = 60,
     random_seed: int = 42,
     single_phase_fraction: Optional[float] = None,
     output_dir: Optional[str] = None,
     show_steps: bool = True,
+    compact_output: bool = True,
 ):
     _set_if_not_none(
         s03b,
@@ -172,19 +268,22 @@ def run_ml_multiphase(
         ),
         show_steps,
     )
-    s03b.main()
+    _run_section_main(s03b, compact_output=compact_output)
+    if compact_output:
+        _print_compact_ml_multiphase_summary(s03b.OUTPUT_DIR)
     return s03b.OUTPUT_DIR
 
 
 def run_nn_1phase(
-    synth_samples_per_formula: int = 12,
-    nn_max_iter: int = 80,
+    synth_samples_per_formula: int = 80,
+    nn_max_iter: int = 220,
     hidden_layer_sizes: Optional[tuple[int, ...]] = (128, 64),
     alpha: Optional[float] = 1e-4,
     learning_rate_init: Optional[float] = 1e-3,
     random_seed: int = 42,
     output_dir: Optional[str] = None,
     show_steps: bool = True,
+    compact_output: bool = True,
 ):
     _set_if_not_none(
         s03c,
@@ -206,13 +305,15 @@ def run_nn_1phase(
         ),
         show_steps,
     )
-    s03c.main()
+    _run_section_main(s03c, compact_output=compact_output)
+    if compact_output:
+        _print_compact_nn_1phase_summary(s03c.OUTPUT_DIR)
     return s03c.OUTPUT_DIR
 
 
 def run_nn_multiphase(
-    synth_samples_per_formula: int = 8,
-    nn_max_iter: int = 80,
+    synth_samples_per_formula: int = 60,
+    nn_max_iter: int = 220,
     hidden_layer_sizes: Optional[tuple[int, ...]] = (128, 64),
     alpha: Optional[float] = 1e-4,
     learning_rate_init: Optional[float] = 1e-3,
@@ -220,6 +321,7 @@ def run_nn_multiphase(
     prediction_threshold: Optional[float] = None,
     output_dir: Optional[str] = None,
     show_steps: bool = True,
+    compact_output: bool = True,
 ):
     _set_if_not_none(
         s03d,
@@ -242,13 +344,15 @@ def run_nn_multiphase(
         ),
         show_steps,
     )
-    s03d.main()
+    _run_section_main(s03d, compact_output=compact_output)
+    if compact_output:
+        _print_compact_multilabel_nn_summary(s03d.OUTPUT_DIR)
     return s03d.OUTPUT_DIR
 
 
 def run_cnn_multiphase(
-    synth_samples_per_formula: int = 8,
-    nn_max_iter: int = 20,
+    synth_samples_per_formula: int = 60,
+    nn_max_iter: int = 220,
     conv_channels: Optional[tuple[int, ...]] = (16, 32),
     kernel_sizes: Optional[tuple[int, ...]] = (7, 5),
     pool_kernel_size: Optional[int] = 2,
@@ -260,6 +364,7 @@ def run_cnn_multiphase(
     random_seed: int = 42,
     output_dir: Optional[str] = None,
     show_steps: bool = True,
+    compact_output: bool = True,
 ):
     _set_if_not_none(
         s03e,
@@ -286,13 +391,15 @@ def run_cnn_multiphase(
         ),
         show_steps,
     )
-    s03e.main()
+    _run_section_main(s03e, compact_output=compact_output)
+    if compact_output:
+        _print_compact_multilabel_nn_summary(s03e.OUTPUT_DIR)
     return s03e.OUTPUT_DIR
 
 
 def run_cnn_no_augmentation(
-    synth_samples_per_formula: int = 8,
-    nn_max_iter: int = 20,
+    synth_samples_per_formula: int = 60,
+    nn_max_iter: int = 220,
     conv_channels: Optional[tuple[int, ...]] = (16, 32),
     kernel_sizes: Optional[tuple[int, ...]] = (7, 5),
     pool_kernel_size: Optional[int] = 2,
@@ -304,6 +411,7 @@ def run_cnn_no_augmentation(
     random_seed: int = 42,
     output_dir: Optional[str] = None,
     show_steps: bool = True,
+    compact_output: bool = True,
 ):
     _set_if_not_none(
         s03f,
@@ -330,13 +438,15 @@ def run_cnn_no_augmentation(
         ),
         show_steps,
     )
-    s03f.main()
+    _run_section_main(s03f, compact_output=compact_output)
+    if compact_output:
+        _print_compact_multilabel_nn_summary(s03f.OUTPUT_DIR)
     return s03f.OUTPUT_DIR
 
 
 def run_cnn_random_shifts(
-    synth_samples_per_formula: int = 8,
-    nn_max_iter: int = 20,
+    synth_samples_per_formula: int = 60,
+    nn_max_iter: int = 220,
     conv_channels: Optional[tuple[int, ...]] = (16, 32),
     kernel_sizes: Optional[tuple[int, ...]] = (7, 5),
     pool_kernel_size: Optional[int] = 2,
@@ -348,6 +458,7 @@ def run_cnn_random_shifts(
     random_seed: int = 42,
     output_dir: Optional[str] = None,
     show_steps: bool = True,
+    compact_output: bool = True,
 ):
     _set_if_not_none(
         s03g,
@@ -374,13 +485,15 @@ def run_cnn_random_shifts(
         ),
         show_steps,
     )
-    s03g.main()
+    _run_section_main(s03g, compact_output=compact_output)
+    if compact_output:
+        _print_compact_multilabel_nn_summary(s03g.OUTPUT_DIR)
     return s03g.OUTPUT_DIR
 
 
 def run_mixture_of_experts(
-    synth_samples_per_formula: int = 6,
-    nn_max_iter: int = 20,
+    synth_samples_per_formula: int = 60,
+    nn_max_iter: int = 80,
     conv_channels: Optional[tuple[int, ...]] = (6, 12),
     kernel_sizes: Optional[tuple[int, ...]] = (5, 3),
     pool_kernel_size: Optional[int] = 2,
@@ -390,11 +503,12 @@ def run_mixture_of_experts(
     learning_rate_init: Optional[float] = 1e-3,
     batch_size: Optional[int] = 64,
     prediction_threshold: Optional[float] = 0.50,
-    min_epochs: int = 5,
-    patience: int = 4,
+    min_epochs: int = 20,
+    patience: int = 10,
     random_seed: int = 42,
     output_dir: Optional[str] = None,
     show_steps: bool = True,
+    compact_output: bool = True,
 ):
     _set_if_not_none(
         s03h,
@@ -424,5 +538,7 @@ def run_mixture_of_experts(
         ),
         show_steps,
     )
-    s03h.main()
+    _run_section_main(s03h, compact_output=compact_output)
+    if compact_output:
+        _print_compact_multilabel_nn_summary(s03h.OUTPUT_DIR)
     return s03h.OUTPUT_DIR
