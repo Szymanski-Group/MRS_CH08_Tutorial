@@ -49,8 +49,8 @@ NUM_OBS_LINES_FOR_FOM = 20
 MATCH_TOLERANCE_DEG = 0.25
 MIN_MATCHED_LINES_FOR_SCORE = 6
 
-# Plot style (matching Slide-27 sizing)
-FIGSIZE = (5, 4.375)
+# Plot style
+FIGSIZE = (8, 5)
 AXIS_LABEL_SIZE = 18
 TICK_LABEL_SIZE = 15
 TITLE_SIZE = 15
@@ -246,7 +246,7 @@ def plot_summary(pattern_name, tt, intensity, obs_peaks, best_m, best_f, refs, s
     plt.savefig(out, dpi=200)
     plt.close(fig)
     if show_plot:
-        display(Image(filename=str(out)))
+        display(Image(filename=str(out)), dpi=100)
     return out
 
 
