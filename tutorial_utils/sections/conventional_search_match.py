@@ -245,7 +245,7 @@ def plot_summary(pattern_name, tt, intensity, obs_peaks, best_m, best_f, refs, s
     plt.savefig(out, dpi=200)
     plt.close(fig)
     if show_plot:
-        display(Image(filename=str(out), width=900))
+        display(Image(filename=str(out), width=1600))
     return out
 
 
