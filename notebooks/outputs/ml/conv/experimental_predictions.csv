@@ -1,0 +1,31 @@
+model,pattern,true_phase,predicted_phase,correct
+k-NN,In2O3,In2O3,MnCr2O4,0
+k-NN,Li2CO3,Li2CO3,MnCr2O4,0
+k-NN,LiMnO2,LiMnO2,In2O3,0
+k-NN,Mn2O3,Mn2O3,MnCr2O4,0
+k-NN,MnCr2O4,MnCr2O4,MnCr2O4,1
+k-NN,MnO,MnO,MnO,1
+k-NN,MnO2,MnO2,MnO2,1
+k-NN,TiO2,TiO2,In2O3,0
+k-NN,V2O5,V2O5,MnO,0
+k-NN,ZrO2,ZrO2,MnCr2O4,0
+Random Forest,In2O3,In2O3,In2O3,1
+Random Forest,Li2CO3,Li2CO3,Li2CO3,1
+Random Forest,LiMnO2,LiMnO2,TiO2,0
+Random Forest,Mn2O3,Mn2O3,Mn2O3,1
+Random Forest,MnCr2O4,MnCr2O4,MnCr2O4,1
+Random Forest,MnO,MnO,MnO,1
+Random Forest,MnO2,MnO2,MnO2,1
+Random Forest,TiO2,TiO2,TiO2,1
+Random Forest,V2O5,V2O5,V2O5,1
+Random Forest,ZrO2,ZrO2,ZrO2,1
+SVM,In2O3,In2O3,ZrO2,0
+SVM,Li2CO3,Li2CO3,Li2CO3,1
+SVM,LiMnO2,LiMnO2,V2O5,0
+SVM,Mn2O3,Mn2O3,Mn2O3,1
+SVM,MnCr2O4,MnCr2O4,MnCr2O4,1
+SVM,MnO,MnO,MnO,1
+SVM,MnO2,MnO2,TiO2,0
+SVM,TiO2,TiO2,TiO2,1
+SVM,V2O5,V2O5,V2O5,1
+SVM,ZrO2,ZrO2,ZrO2,1

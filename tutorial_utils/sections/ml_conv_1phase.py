@@ -20,6 +20,8 @@ from sklearn.metrics import accuracy_score
 
 EXPERIMENT_DIR = Path("data/exp_patterns/one_phase")
 REFERENCE_DIR = Path("data/reference_structures")
+print(f"Reference CIF files: {len(list(REFERENCE_DIR.glob('*.cif')))}")
+print(f"Resolved path: {REFERENCE_DIR.resolve()}")
 OUTPUT_DIR = Path("outputs/ml/conv")
 
 MIN_ANGLE = 10.0
