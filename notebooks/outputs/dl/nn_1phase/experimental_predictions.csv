@@ -1,0 +1,11 @@
+pattern,true_phase,predicted_phase,correct
+In2O3,In2O3,In2O3,1
+Li2CO3,Li2CO3,Li2CO3,1
+LiMnO2,LiMnO2,V2O5,0
+Mn2O3,Mn2O3,ZrO2,0
+MnCr2O4,MnCr2O4,MnCr2O4,1
+MnO,MnO,MnO,1
+MnO2,MnO2,MnO2,1
+TiO2,TiO2,TiO2,1
+V2O5,V2O5,V2O5,1
+ZrO2,ZrO2,ZrO2,1

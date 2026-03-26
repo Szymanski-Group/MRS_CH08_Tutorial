@@ -1,0 +1,2 @@
+model,hidden_layers,n_outputs,validation_accuracy,test_accuracy
+Neural Net,"(128, 64)",10,0.9833333333333333,0.8

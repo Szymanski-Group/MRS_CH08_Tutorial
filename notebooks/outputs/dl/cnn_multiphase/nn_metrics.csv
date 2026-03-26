@@ -1,0 +1,2 @@
+model,hidden_layers,n_outputs,threshold,validation_precision_micro,validation_recall_micro,validation_f1_micro,test_precision_micro,test_recall_micro,test_f1_micro
+CNN,"(128, 64)",10,0.5,0.9818181818181818,0.8816326530612245,0.9290322580645162,0.5,0.75,0.6

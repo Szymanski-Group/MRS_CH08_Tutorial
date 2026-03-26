@@ -1,0 +1,2 @@
+model,hidden_layers,n_outputs,threshold,validation_precision_micro,validation_recall_micro,validation_f1_micro,test_precision_micro,test_recall_micro,test_f1_micro
+Neural Net,"(128, 64)",10,0.5,0.9545454545454546,0.7714285714285715,0.8532731376975169,0.7368421052631579,0.5833333333333334,0.6511627906976745

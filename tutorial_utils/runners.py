@@ -349,10 +349,9 @@ def run_nn_multiphase(
         _print_compact_multilabel_nn_summary(s03d.OUTPUT_DIR)
     return s03d.OUTPUT_DIR
 
-
 def run_cnn_multiphase(
     synth_samples_per_formula: int = 60,
-    nn_max_iter: int = 220,
+    nn_max_iter: int = 50,
     conv_channels: Optional[tuple[int, ...]] = (16, 32),
     kernel_sizes: Optional[tuple[int, ...]] = (7, 5),
     pool_kernel_size: Optional[int] = 2,
@@ -490,21 +489,17 @@ def run_cnn_random_shifts(
         _print_compact_multilabel_nn_summary(s03g.OUTPUT_DIR)
     return s03g.OUTPUT_DIR
 
-
 def run_mixture_of_experts(
-    synth_samples_per_formula: int = 60,
-    nn_max_iter: int = 80,
-    conv_channels: Optional[tuple[int, ...]] = (6, 12),
-    kernel_sizes: Optional[tuple[int, ...]] = (5, 3),
+    synth_samples_per_formula: int = 200,
+    nn_max_iter: int = 50,
+    conv_channels: Optional[tuple[int, ...]] = (16, 32),
+    kernel_sizes: Optional[tuple[int, ...]] = (7, 5),
     pool_kernel_size: Optional[int] = 2,
-    adaptive_pool_points: Optional[int] = 32,
-    hidden_layer_sizes: Optional[tuple[int, ...]] = (16, 8),
+    hidden_layer_sizes: Optional[tuple[int, ...]] = (128, 64),
     alpha: Optional[float] = 1e-4,
     learning_rate_init: Optional[float] = 1e-3,
-    batch_size: Optional[int] = 64,
+    batch_size: Optional[int] = 32,
     prediction_threshold: Optional[float] = 0.50,
-    min_epochs: int = 20,
-    patience: int = 10,
     random_seed: int = 42,
     output_dir: Optional[str] = None,
     show_steps: bool = True,
@@ -517,14 +512,11 @@ def run_mixture_of_experts(
         CNN_CONV_CHANNELS=conv_channels,
         CNN_KERNEL_SIZES=kernel_sizes,
         CNN_POOL_KERNEL_SIZE=pool_kernel_size,
-        CNN_ADAPTIVE_POOL_POINTS=adaptive_pool_points,
         NN_HIDDEN_LAYER_SIZES=hidden_layer_sizes,
         NN_ALPHA=alpha,
         NN_LEARNING_RATE_INIT=learning_rate_init,
         NN_BATCH_SIZE=batch_size,
         PREDICTION_THRESHOLD=prediction_threshold,
-        NN_EARLY_STOPPING_MIN_EPOCHS=min_epochs,
-        NN_EARLY_STOPPING_PATIENCE=patience,
         RANDOM_SEED=random_seed,
         OUTPUT_DIR=_maybe_path(output_dir),
     )
@@ -533,7 +525,7 @@ def run_mixture_of_experts(
         (
             "Build synthetic multiphase dataset",
             "Train one binary expert per phase",
-            "Apply early stopping and aggregate outputs",
+            "Aggregate expert outputs",
             "Evaluate micro precision/recall/F1",
         ),
         show_steps,

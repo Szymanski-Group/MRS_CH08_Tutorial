@@ -1,0 +1,4 @@
+model,threshold,test_precision_micro,test_recall_micro,test_f1_micro,best_params
+k-NN,0.30000000000000004,0.14285714285714285,0.25,0.18181818181818182,{'n_neighbors': 7}
+Random Forest,0.4,0.3953488372093023,0.7083333333333334,0.5074626865671642,"{'n_estimators': 250, 'max_depth': None, 'min_samples_leaf': 2}"
+SVM,0.30000000000000004,0.6521739130434783,0.625,0.6382978723404256,"{'C': 1.0, 'gamma': 'scale'}"

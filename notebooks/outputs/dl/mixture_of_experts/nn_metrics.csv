@@ -1,0 +1,2 @@
+model,n_experts,threshold,validation_precision_micro,validation_recall_micro,validation_f1_micro,test_precision_micro,test_recall_micro,test_f1_micro
+CNN-MoE,10,0.5,0.954337899543379,0.8530612244897959,0.9008620689655172,0.64,0.6666666666666666,0.6530612244897959
