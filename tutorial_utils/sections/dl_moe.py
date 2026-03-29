@@ -11,6 +11,7 @@ from sklearn.metrics import precision_score, recall_score, f1_score
 import torch
 import torch.nn as nn
 from torch.utils.data import DataLoader, TensorDataset
+import random
 
 EXPERIMENT_DIR = Path("data/exp_patterns/multi_phase")
 REFERENCE_DIR = Path("data/reference_structures")
@@ -53,6 +54,15 @@ HUMP_SCALE_RANGE = (0.02, 0.20)
 NOISE_SCALE_RANGE = (0.002, 0.020)
 
 VAL_FRACTION = 0.20
+
+random.seed(RANDOM_SEED)
+np.random.seed(RANDOM_SEED)
+
+torch.manual_seed(RANDOM_SEED)
+torch.cuda.manual_seed_all(RANDOM_SEED)
+
+torch.backends.cudnn.deterministic = True
+torch.backends.cudnn.benchmark = False
 
 def normalize_0_100(y):
     y = np.asarray(y, dtype=float)
